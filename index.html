@@ -18,8 +18,8 @@
             <h1>👋 Обо мне</h1>
             <p>Приве-е-ет! Меня зовут Иван Горностаев, и&nbsp;я&nbsp;— графический дизайнер.</p>
             <p>На этой уютной страничке представлены мои <a href="#projects">работы</a>, а&nbsp;также <a href="#links">ссылки</a> для&nbsp;связи со&nbsp;мной.</p>
-            <a name="projects"></a>
-            <h1>📋 Мои работы</h1>
+            <!-- <a name="projects"></a> -->
+            <h1 id="projects">📋 Мои работы</h1>
             <p>
                 <span class="hpquote">«</span><a href="./logotypes.html">Лабиринт</a>»
                 <br>
@@ -33,8 +33,8 @@
                 <br>
                 <span class="hpquote">«</span><a href="#">Сластория</a>»
             </p>
-            <a name="links"></a>
-            <h1>🔗 Ссылочки</h1>
+            <!-- <a name="links"></a> -->
+            <h1 id="links">🔗 Ссылочки</h1>
             <p>
                 <a href="mailto:gornostyle@tuta.io">gornostyle@tuta.io</a>
                 <br>
@@ -45,5 +45,16 @@
             </p>
             <p>Я всегда рад новым заказам. Давай создадим что-нибудь клевое! 🤪</p>
         </div>
+        <script type="text/javascript">
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            }); 
+        </script>
     </body>
 </html>

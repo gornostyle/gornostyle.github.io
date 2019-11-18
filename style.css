@@ -1,6 +1,6 @@
-html {
+/*html {
     scroll-behavior: smooth;
-}
+}*/
 
 body {
     height: 100%;
@@ -49,6 +49,10 @@ h1 {
     line-height: 2.3em;
     margin: 0;
 }
+
+/*:target {
+    background-color: #ffeaa7;
+}*/
 
 .hpquote {
     margin-left: -0.6em;
