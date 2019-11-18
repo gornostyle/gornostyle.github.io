@@ -1,0 +1,78 @@
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    height: 100%;
+    transition: 1s all;
+    margin: 0 auto;
+    background: #ffffff;
+}
+
+p {
+    font-family: 'Montserrat Alternates', sans-serif;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+a {
+    color: inherit;
+}
+
+a:hover {
+    color: #e74c3c;
+}
+
+h1 {
+    font-family: 'Montserrat Alternates', sans-serif;
+    font-weight: 500;
+    color: #3498db;
+}
+
+.box {
+    padding: 7% 12%;
+    position: relative;
+    /*display: block;*/
+    /*max-width: 1000px;*/
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.index p {
+    font-size: 4em;
+    line-height: 1.2em;
+    margin: 0px 0px 120px 0px;
+}
+
+.index h1 {
+    font-size: 2em;
+    line-height: 2.3em;
+    margin: 0;
+}
+
+.hpquote {
+    margin-left: -0.6em;
+}
+
+@media (min-width: 300px) and (max-width: 720px) {
+    .index h1 {
+        font-size: 2em;
+        line-height: 2.3em;
+        margin: 0;
+    }
+
+    .index p {
+        font-size: 2em;
+        line-height: 1.5em;
+        margin: 0px 0px 60px 0px;
+    }
+
+    .box {
+        padding: 6% 6%;
+        position: relative;
+        /*display: block;*/
+        /*max-width: 600px;*/
+        margin-right: auto;
+        margin-left: auto;
+    }
+}
