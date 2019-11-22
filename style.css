@@ -50,9 +50,9 @@ h1 {
     margin: 0;
 }
 
-/*:target {
+:target {
     background-color: #ffeaa7;
-}*/
+}
 
 .hpquote {
     margin-left: -0.6em;
