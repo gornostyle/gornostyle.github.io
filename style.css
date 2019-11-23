@@ -77,6 +77,7 @@ h1 {
 
 .project .paragraph {
     color: #ffffff;
+    font-weight: 500;
 }
 
 
@@ -88,12 +89,19 @@ h1 {
     margin: 0;
 }
 
+.heading.large {
+    font-size: 4em;
+    line-height: 1.2em;
+    margin: 60px 0px 60px 0px;
+}
+
 .index .heading {
     color: #3498db;
 }
 
 .project .heading {
     color: #ffffff;
+    font-weight: 600;
 }
 
 
@@ -109,6 +117,12 @@ h1 {
 @media (min-width: 300px) and (max-width: 750px) {
     .heading {
         font-size: 2em;
+        line-height: 2.3em;
+        margin: 0;
+    }
+
+    .heading.large {
+        font-size: 3em;
         line-height: 2.3em;
         margin: 0;
     }
