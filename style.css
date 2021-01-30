@@ -36,6 +36,11 @@ h1 {
     font-weight: 500;
 }
 
+h2 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 500;
+}
+
 
 /* backgrounds */
 
@@ -70,11 +75,19 @@ h1 {
     margin: 0px;
 }
 
+.paragraph.small-margin {
+    margin: 0px 0px 60px 0px;
+}
+
 .paragraph.description {
     font-size: 1.5em;
     font-weight: 500;
     line-height: 1.2em;
     margin: 0px 0px 16px 0px;
+}
+
+.paragraph.description.last {
+    margin: 0px 0px 120px 0px;
 }
 
 .index .paragraph {
@@ -97,6 +110,10 @@ h1 {
     font-size: 2em;
     line-height: 2.3em;
     margin: 0;
+}
+
+.heading.top-margin {
+    margin: 60px 0px 0px 0px;
 }
 
 .heading.large {
@@ -122,13 +139,22 @@ h1 {
 }
 
 .project .link:hover {
-    color: #fed330;
+    color: #2980b9;/*#fed330;*/
 }
 
 /* left quote */
 
 .hpquote {
     margin-left: -0.6em;
+}
+
+
+/* image */
+
+.image {
+  width: 100%;
+  margin: 0px 0px 60px 0px;
+  border-radius: 64px;
 }
 
 
@@ -158,5 +184,9 @@ h1 {
         position: relative;
         margin-right: auto;
         margin-left: auto;
+    }
+
+    .image {
+      border-radius: 32px;
     }
 }
