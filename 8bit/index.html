@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>8-Bit Photo Lab</title>
+<style>
+:root{
+  --bg:#0d0d0d;--panel:#151515;--panel2:#1b1b1b;--line:#303030;
+  --text:#f2f2f2;--muted:#888;--accent:#fff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:34px 0 50px}
+header{display:flex;justify-content:space-between;gap:24px;align-items:end;margin-bottom:24px}
+h1{font-size:32px;line-height:1;margin:0 0 8px;letter-spacing:-.04em}
+.subtitle{color:var(--muted);font-size:14px}
+.badge{border:1px solid var(--line);padding:7px 10px;border-radius:999px;color:#aaa;font-size:12px;white-space:nowrap}
+.layout{display:grid;grid-template-columns:290px 1fr;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.controls{display:flex;flex-direction:column;gap:15px}
+.control label,.section-title{display:block;font-size:12px;color:#aaa;margin-bottom:7px}
+select,input[type=range],button,.upload{
+  width:100%;height:42px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--text);font:inherit;
+}
+select{padding:0 11px}
+button,.upload{cursor:pointer;display:flex;align-items:center;justify-content:center}
+button:hover,.upload:hover,select:hover{border-color:#555;background:#202020}
+button:disabled{opacity:.35;cursor:not-allowed}
+.upload input{display:none}
+.range-row{display:grid;grid-template-columns:1fr 46px;gap:8px;align-items:center}
+.range-value{height:42px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px}
+input[type=range]{height:6px;accent-color:#eee}
+.check{display:flex;gap:9px;align-items:center;color:#ccc;font-size:13px}
+.check input{accent-color:#fff}
+hr{border:0;border-top:1px solid var(--line);margin:3px 0}
+.palette{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.swatch{aspect-ratio:1;border-radius:5px;border:1px solid rgba(255,255,255,.14);position:relative}
+.swatch span{position:absolute;left:4px;bottom:3px;font-size:7px;opacity:.55;text-shadow:0 1px 2px #000}
+.canvas-panel{padding:14px}
+.canvas-wrap{
+  min-height:620px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;padding:28px;
+  background-color:#202020;
+  background-image:
+    linear-gradient(45deg,#292929 25%,transparent 25%),
+    linear-gradient(-45deg,#292929 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#292929 75%),
+    linear-gradient(-45deg,transparent 75%,#292929 75%);
+  background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;
+}
+canvas{
+  image-rendering:pixelated;image-rendering:crisp-edges;
+  max-width:100%;max-height:74vh;width:auto;height:auto;
+  box-shadow:0 18px 55px rgba(0,0,0,.5);display:none;
+}
+.empty{color:#666;text-align:center;font-size:14px}
+.meta{display:flex;justify-content:space-between;color:#666;font-size:11px;padding:10px 3px 0}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.primary{background:#eee;color:#111;border-color:#eee;font-weight:600}
+.primary:hover{background:#fff}
+.file-name{font-size:11px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:800px){
+  .layout{grid-template-columns:1fr}
+  .canvas-wrap{min-height:60vh}
+  header{align-items:start}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div>
+    <h1>8-Bit Photo Lab</h1>
+    <div class="subtitle">128 px · nearest neighbour · 8 colours · dithering</div>
+  </div>
+  <div class="badge">100% local · без загрузки в интернет</div>
+</header>
+
+<div class="layout">
+  <aside class="panel">
+    <div class="controls">
+      <label class="upload">
+        <input id="fileInput" type="file" accept="image/*">
+        Загрузить фотографию
+      </label>
+      <div id="fileName" class="file-name">Файл не выбран</div>
+
+      <div>
+        <div class="control label">Палитра</div>
+        <select id="paletteSelect">
+          <option value="gameboy">Game Boy</option>
+          <option value="pico8">PICO-8</option>
+          <option value="cga">CGA</option>
+          <option value="nes">NES-ish</option>
+          <option value="mono">Monochrome</option>
+          <option value="sunset">Sunset</option>
+          <option value="forest">Forest</option>
+          <option value="ocean">Ocean</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="section-title">Палитра</div>
+        <div id="palettePreview" class="palette"></div>
+      </div>
+
+      <hr>
+
+      <div>
+        <div class="control label">Dithering</div>
+        <select id="ditherSelect">
+          <option value="floyd">Floyd–Steinberg</option>
+          <option value="bayer">Bayer 4×4</option>
+          <option value="none">Без dithering</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="control label">Сила dithering</div>
+        <div class="range-row">
+          <input id="ditherStrength" type="range" min="0" max="150" value="100">
+          <div id="ditherValue" class="range-value">100%</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="control label">Контраст</div>
+        <div class="range-row">
+          <input id="contrast" type="range" min="-50" max="50" value="0">
+          <div id="contrastValue" class="range-value">0</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="control label">Яркость</div>
+        <div class="range-row">
+          <input id="brightness" type="range" min="-50" max="50" value="0">
+          <div id="brightnessValue" class="range-value">0</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="control label">Масштаб просмотра</div>
+        <select id="viewScale">
+          <option value="1">1× — 128 px</option>
+          <option value="2">2× — 256 px</option>
+          <option value="3">3× — 384 px</option>
+          <option value="4" selected>4× — 512 px</option>
+          <option value="6">6× — 768 px</option>
+          <option value="8">8× — 1024 px</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="control label">Масштаб экспорта</div>
+        <select id="exportScale">
+          <option value="1">1× — исходные 128 px</option>
+          <option value="2">2× — 256 px</option>
+          <option value="3">3× — 384 px</option>
+          <option value="4" selected>4× — 512 px</option>
+          <option value="6">6× — 768 px</option>
+          <option value="8">8× — 1024 px</option>
+          <option value="10">10× — 1280 px</option>
+          <option value="12">12× — 1536 px</option>
+          <option value="16">16× — 2048 px</option>
+        </select>
+      </div>
+
+      <label class="check">
+        <input id="grayscale" type="checkbox">
+        Сначала перевести в grayscale
+      </label>
+
+      <hr>
+
+      <div class="buttons">
+        <button id="downloadJpg" class="primary" disabled>JPEG</button>
+        <button id="downloadPng" disabled>PNG</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="panel canvas-panel">
+    <div class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div id="empty" class="empty">Загрузите фотографию, чтобы начать</div>
+    </div>
+    <div class="meta">
+      <span id="sizeInfo">—</span>
+      <span>8 цветов</span>
+    </div>
+  </main>
+</div>
+</div>
+
+<script>
+const PALETTES={
+gameboy:["#0f380f","#306230","#6b8e23","#8bac0f","#9bbc0f","#c7d36f","#e0e8a8","#f4f7cf"],
+pico8:["#000000","#1d2b53","#7e2553","#008751","#ab5236","#5f574f","#c2c3c7","#fff1e8"],
+cga:["#000000","#0000aa","#00aa00","#00aaaa","#aa0000","#aa00aa","#aa5500","#aaaaaa"],
+nes:["#111111","#332255","#4433aa","#227766","#55aa55","#cc9933","#dd5555","#eeeecc"],
+mono:["#000000","#202020","#404040","#606060","#808080","#a0a0a0","#c8c8c8","#ffffff"],
+sunset:["#170f24","#3b1f3a","#682d4e","#a63d40","#d65a3a","#ed8a43","#f5c36a","#fff0b5"],
+forest:["#07140d","#102d1b","#1e5030","#34734a","#57965e","#83b968","#bad47b","#e4e9a7"],
+ocean:["#07111f","#0b2942","#104f68","#137c87","#29a89a","#6bc5a4","#b5dfb5","#e8f1d0"],
+custom:["#080808","#252525","#454545","#666666","#888888","#aaaaaa","#d0d0d0","#ffffff"]
+};
+
+const fileInput=document.getElementById("fileInput");
+const paletteSelect=document.getElementById("paletteSelect");
+const ditherSelect=document.getElementById("ditherSelect");
+const ditherStrength=document.getElementById("ditherStrength");
+const contrast=document.getElementById("contrast");
+const brightness=document.getElementById("brightness");
+const grayscale=document.getElementById("grayscale");
+const viewScale=document.getElementById("viewScale");
+const exportScale=document.getElementById("exportScale");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d",{willReadFrequently:true});
+const empty=document.getElementById("empty");
+const palettePreview=document.getElementById("palettePreview");
+const fileName=document.getElementById("fileName");
+const sizeInfo=document.getElementById("sizeInfo");
+const downloadJpg=document.getElementById("downloadJpg");
+const downloadPng=document.getElementById("downloadPng");
+
+let sourceImage=null;
+
+function hexToRgb(hex){
+  const n=parseInt(hex.slice(1),16);
+  return {r:(n>>16)&255,g:(n>>8)&255,b:n&255};
+}
+
+function renderPalette(){
+  palettePreview.innerHTML="";
+  PALETTES[paletteSelect.value].forEach((hex,i)=>{
+    const s=document.createElement("div");
+    s.className="swatch";
+    s.style.background=hex;
+    s.title=hex;
+    s.innerHTML="<span>"+(i+1)+"</span>";
+    palettePreview.appendChild(s);
+  });
+}
+
+function clamp(v){return Math.max(0,Math.min(255,v));}
+
+function adjustPixel(v,b,c){
+  v+=b*2.55;
+  const factor=(259*(c+255))/(255*(259-c));
+  return clamp(factor*(v-128)+128);
+}
+
+function nearest(r,g,b,palette){
+  let best=palette[0],bestD=Infinity;
+  for(const p of palette){
+    // Небольшое perceptual-взвешивание: зелёный канал важнее синего.
+    const dr=r-p.r,dg=g-p.g,db=b-p.b;
+    const d=0.30*dr*dr+0.59*dg*dg+0.11*db*db;
+    if(d<bestD){bestD=d;best=p;}
+  }
+  return best;
+}
+
+// Bayer matrix для контролируемого ordered dithering.
+const BAYER=[
+  [0,8,2,10],
+  [12,4,14,6],
+  [3,11,1,9],
+  [15,7,13,5]
+];
+
+function process(){
+  if(!sourceImage)return;
+
+  const max=128;
+  const sw=sourceImage.naturalWidth, sh=sourceImage.naturalHeight;
+  let w,h;
+  if(sw>=sh){w=max;h=Math.max(1,Math.round(sh*max/sw));}
+  else{h=max;w=Math.max(1,Math.round(sw*max/sh));}
+
+  // Сначала создаём маленькое изображение.
+  const small=document.createElement("canvas");
+  small.width=w;small.height=h;
+  const sctx=small.getContext("2d",{willReadFrequently:true});
+  sctx.imageSmoothingEnabled=false;
+  sctx.drawImage(sourceImage,0,0,w,h);
+
+  const image=sctx.getImageData(0,0,w,h);
+  const d=image.data;
+  const pal=PALETTES[paletteSelect.value].map(hexToRgb);
+  const b=Number(brightness.value);
+  const c=Number(contrast.value);
+  const strength=Number(ditherStrength.value)/100;
+  const mode=ditherSelect.value;
+
+  // Подготавливаем RGB. Прозрачность композируем на белый фон,
+  // чтобы JPEG не получал неожиданный чёрный фон.
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i],g=d[i+1],bl=d[i+2],a=d[i+3]/255;
+
+    r=clamp(r*a+255*(1-a));
+    g=clamp(g*a+255*(1-a));
+    bl=clamp(bl*a+255*(1-a));
+
+    if(grayscale.checked){
+      const y=.299*r+.587*g+.114*bl;
+      r=g=bl=y;
+    }
+
+    d[i]=adjustPixel(r,b,c);
+    d[i+1]=adjustPixel(g,b,c);
+    d[i+2]=adjustPixel(bl,b,c);
+    d[i+3]=255;
+  }
+
+  if(mode==="floyd"){
+    floydSteinberg(d,w,h,pal,strength);
+  }else if(mode==="bayer"){
+    bayerDither(d,w,h,pal,strength);
+  }else{
+    for(let i=0;i<d.length;i+=4){
+      const p=nearest(d[i],d[i+1],d[i+2],pal);
+      d[i]=p.r;d[i+1]=p.g;d[i+2]=p.b;
+    }
+  }
+
+  canvas.width=w;canvas.height=h;
+  ctx.imageSmoothingEnabled=false;
+  ctx.putImageData(image,0,0);
+
+  updateViewScale();
+  canvas.style.display="block";
+  empty.style.display="none";
+  sizeInfo.textContent=w+" × "+h+" px";
+  downloadJpg.disabled=false;
+  downloadPng.disabled=false;
+}
+
+// Floyd–Steinberg error diffusion.
+// Работает с плавающими RGB-значениями и распространяет ошибку
+// только по соседним пикселям маленького 128px изображения.
+function floydSteinberg(data,w,h,palette,strength){
+  const errors=new Float32Array(data.length);
+
+  for(let y=0;y<h;y++){
+    // Serpentine scanning уменьшает направленные артефакты.
+    const reverse=(y%2===1);
+    const start=reverse?w-1:0;
+    const end=reverse?-1:w;
+    const step=reverse?-1:1;
+
+    for(let x=start;x!==end;x+=step){
+      const i=(y*w+x)*4;
+
+      const r=clamp(data[i]+errors[i]);
+      const g=clamp(data[i+1]+errors[i+1]);
+      const b=clamp(data[i+2]+errors[i+2]);
+
+      const p=nearest(r,g,b,palette);
+
+      data[i]=p.r;data[i+1]=p.g;data[i+2]=p.b;data[i+3]=255;
+
+      const er=(r-p.r)*strength;
+      const eg=(g-p.g)*strength;
+      const eb=(b-p.b)*strength;
+
+      distribute(x+step,y,er,eg,eb,7/16);
+      distribute(x-step,y+1,er,eg,eb,3/16);
+      distribute(x,y+1,er,eg,eb,5/16);
+      distribute(x+step,y+1,er,eg,eb,1/16);
+    }
+  }
+
+  function distribute(x,y,er,eg,eb,weight){
+    if(x<0||x>=w||y<0||y>=h)return;
+    const j=(y*w+x)*4;
+    errors[j]+=er*weight;
+    errors[j+1]+=eg*weight;
+    errors[j+2]+=eb*weight;
+  }
+}
+
+function bayerDither(data,w,h,palette,strength){
+  // Ordered dithering перед поиском ближайшего цвета.
+  // Сила 100% соответствует примерно одному уровню 4x4 threshold.
+  const amplitude=32*strength;
+
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;
+      const t=(BAYER[y%4][x%4]/15-.5)*amplitude;
+
+      const p=nearest(
+        clamp(data[i]+t),
+        clamp(data[i+1]+t),
+        clamp(data[i+2]+t),
+        palette
+      );
+
+      data[i]=p.r;data[i+1]=p.g;data[i+2]=p.b;data[i+3]=255;
+    }
+  }
+}
+
+function updateViewScale(){
+  if(!canvas.width || !canvas.height)return;
+  const scale=Number(viewScale.value);
+  canvas.style.width=(canvas.width*scale)+"px";
+  canvas.style.height=(canvas.height*scale)+"px";
+}
+
+function updateLabels(){
+  document.getElementById("ditherValue").textContent=ditherStrength.value+"%";
+  document.getElementById("contrastValue").textContent=(contrast.value>0?"+":"")+contrast.value;
+  document.getElementById("brightnessValue").textContent=(brightness.value>0?"+":"")+brightness.value;
+}
+
+fileInput.addEventListener("change",e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+
+  fileName.textContent=file.name;
+
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+
+  img.onload=()=>{
+    sourceImage=img;
+    process();
+    URL.revokeObjectURL(url);
+  };
+
+  img.src=url;
+});
+
+paletteSelect.addEventListener("change",()=>{
+  renderPalette();
+  process();
+});
+
+[ditherSelect,ditherStrength,contrast,brightness,grayscale].forEach(el=>{
+  el.addEventListener("input",()=>{
+    updateLabels();
+    process();
+  });
+  el.addEventListener("change",()=>{
+    updateLabels();
+    process();
+  });
+});
+
+viewScale.addEventListener("change",updateViewScale);
+
+function download(type){
+  if(!sourceImage || !canvas.width)return;
+
+  const scale=Number(exportScale.value);
+  const out=document.createElement("canvas");
+  out.width=canvas.width*scale;
+  out.height=canvas.height*scale;
+
+  const outCtx=out.getContext("2d");
+  outCtx.imageSmoothingEnabled=false;
+  outCtx.drawImage(canvas,0,0,canvas.width,canvas.height,0,0,out.width,out.height);
+
+  const a=document.createElement("a");
+  const ext=type==="jpeg"?"jpg":"png";
+  a.download="8bit-"+paletteSelect.value+"-"+scale+"x."+ext;
+  a.href=out.toDataURL(
+    type==="jpeg"?"image/jpeg":"image/png",
+    type==="jpeg"?0.95:undefined
+  );
+  a.click();
+}
+
+downloadJpg.addEventListener("click",()=>download("jpeg"));
+downloadPng.addEventListener("click",()=>download("png"));
+
+renderPalette();
+updateLabels();
+</script>
+</body>
+</html>
